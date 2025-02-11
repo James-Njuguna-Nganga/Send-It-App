@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const token = localStorage.getItem("token");
     if (!token) {
-        window.location.href = "dashboard.html";
+        window.location.href = "index.html";
     }
 
     async function fetchParcels() {

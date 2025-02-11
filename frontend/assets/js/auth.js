@@ -62,6 +62,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        // Assuming you have a token from the server, set it in local storage
+        const token = "your_generated_token"; // Replace with actual token from server
+        localStorage.setItem("token", token);
+
         localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
         showMessage("Login successful! Redirecting...", "success");
 
