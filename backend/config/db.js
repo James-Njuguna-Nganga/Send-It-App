@@ -1,19 +1,43 @@
 const sql = require('mssql');
 const dotenv = require('dotenv');
+const { log } = require('console');
 
-dotenv.config();
+// Load environment variables using CommonJS
+
+const path = require('path');
+
+// Load the .env file from a specific path
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 
 const config = {
     user: process.env.DB_USER || 'your_default_user',
     password: process.env.DB_PASSWORD || 'your_default_password',
     server: process.env.DB_SERVER || 'your_default_server',
     database: process.env.DB_NAME || 'your_default_db',
-    // options: {
-    //     encrypt: false, // Use encryption
-    //     enableArithAbort: true,
-    //     trustServerCertificate: false // Fix SSL issues
-    // }
+    options: {
+        encrypt: true, // Use encryption
+        enableArithAbort: true,
+        trustServerCertificate: true// Fix SSL issues
+    }
 };
+async function testConnection() {
+    //test whether we can query the database
+    try {
+        // const pool = await poolPromise;
+        let pool = await sql.connect(config);
+        const result = await pool.request().query('SELECT * FROM Test');
+        console.log(result.recordset);
+        return result;
+    } catch (error) {
+        console.error('Error testing database connection', error);
+        return error;
+    }
+}
+console.log('should see')
+console.log(process.env.DB_PASSWORD)
+console.log(process.env.DB_NAME)
+testConnection();
 
 // Ensure required environment variables are loaded
 if (!config.server || typeof config.server !== 'string') {
