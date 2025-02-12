@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com;">
+    <title>SendIT - Register</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1 id="form-title">Join to our Services</h1>
+            <div id="message-box" class="hidden"></div>
+
+            <br>
+            
+            <form id="registerForm" class="auth-form">
+                <h2> Create Account</h2>
+                <div class="form-group">
+                    <input type="text" id="regName" placeholder="Full Name" class="input-field" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" id="regEmail" placeholder="Email" class="input-field" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="regPassword" placeholder="Password" class="input-field" required
+                           title="Password must be at least 6 characters">
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+                <br>
+
+                <p class="toggle-text">
+                    Already have an account? <a href="login.html" class="toggle-link">Login here</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="assets/js/register.js"></script>
+</body>
+</html>

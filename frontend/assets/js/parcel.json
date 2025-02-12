@@ -1,0 +1,51 @@
+{
+    "parcels": [
+      {
+        "id": "P001",
+        "receiverName": "John Doe",
+        "senderName": "Jane Smith",
+        "pickup": "Nairobi CBD",
+        "destination": "Mombasa",
+        "price": 2500,
+        "description": "Fragile electronics equipment",
+        "status": "In Transit",
+        "createdAt": "2024-02-12T10:30:00Z",
+        "updatedAt": "2024-02-12T14:20:00Z",
+        "senderId": "USER123",
+        "receiverId": "USER456"
+      }
+    ],
+    "users": [
+      {
+        "id": "USER123",
+        "name": "Jane Smith",
+        "email": "jane@example.com",
+        "role": "0",
+        "createdAt": "2024-02-01T08:00:00Z"
+      },
+      {
+        "id": "ADMIN001",
+        "name": "Admin User",
+        "email": "admin@sendit.com",
+        "role": "1",
+        "createdAt": "2024-02-01T08:00:00Z"
+      }
+    ],
+    "statuses": [
+      "Pending",
+      "In Transit",
+      "Delivered",
+      "Cancelled"
+    ],
+    "notifications": [
+      {
+        "id": "NOT001",
+        "userId": "USER123",
+        "parcelId": "P001",
+        "message": "Your parcel P001 status has been updated to In Transit",
+        "type": "status_update",
+        "read": false,
+        "createdAt": "2024-02-12T14:20:00Z"
+      }
+    ]
+  }
