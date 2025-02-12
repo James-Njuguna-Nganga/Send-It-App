@@ -1,29 +1,19 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: 'Gmail',
     auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASSWORD
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 
-exports.sendWelcomeEmail = (email) => {
+exports.sendEmail = async (to, subject, text) => {
     const mailOptions = {
-        from: process.env.EMAIL,
-        to: email,
-        subject: 'Welcome to Send-It',
-        text: 'Thank you for registering with Send-It!'
+        from: process.env.EMAIL_USER,
+        to,
+        subject,
+        text
     };
-    transporter.sendMail(mailOptions);
-};
-
-exports.sendStatusUpdateEmail = (email, status) => {
-    const mailOptions = {
-        from: process.env.EMAIL,
-        to: email,
-        subject: 'Parcel Status Update',
-        text: `Your parcel status has been updated to: ${status}`
-    };
-    transporter.sendMail(mailOptions);
+    return transporter.sendMail(mailOptions);
 };

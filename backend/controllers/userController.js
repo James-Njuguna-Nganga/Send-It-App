@@ -1,23 +1,20 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const { getUserByEmail, createUser } = require('../models/userModel');
-const { sendWelcomeEmail } = require('../services/emailService');
+const { getUserByEmail } = require('../models/userModel');
 
-exports.registerUser = async (req, res) => {
-    const { fullName, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await createUser(fullName, email, hashedPassword);
-    sendWelcomeEmail(email);
-    res.status(201).json({ message: 'User registered successfully' });
-};
+exports.getUserProfile = async (req, res) => {
+    try {
+        const user = await getUserByEmail(req.user.email);
 
-exports.loginUser = async (req, res) => {
-    const { email, password } = req.body;
-    const user = await getUserByEmail(email);
-    if (user && await bcrypt.compare(password, user.password)) {
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
-    } else {
-        res.status(401).json({ message: 'Invalid email or password' });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            userId: user.UserID,
+            name: user.Name,
+            email: user.Email,
+            createdAt: user.CreatedAt
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching user profile', error: error.message });
     }
 };

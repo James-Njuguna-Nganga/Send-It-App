@@ -1,13 +1,21 @@
-const dbHelper = require('../helpers/dbHelper');
+const { sql, poolPromise } = require('../config/db');
 
-exports.getUserByEmail = async (email) => {
-    const sql = 'SELECT * FROM users WHERE email = ?';
-    const users = await dbHelper.query(sql, [email]);
-    return users[0];
+exports.createUser = async (name, email, hashedPassword) => {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('Name', sql.VarChar, name)
+        .input('Email', sql.VarChar, email)
+        .input('Password', sql.VarChar, hashedPassword)
+        .execute('sp_InsertUser');
+
+    return result.recordset[0];
 };
 
-exports.createUser = async (fullName, email, password) => {
-    const sql = 'INSERT INTO users (fullName, email, password) VALUES (?, ?, ?)';
-    const result = await dbHelper.query(sql, [fullName, email, password]);
-    return { id: result.insertId, fullName, email };
+exports.getUserByEmail = async (email) => {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('Email', sql.VarChar, email)
+        .execute('sp_GetUserByEmail');
+
+    return result.recordset[0];
 };
