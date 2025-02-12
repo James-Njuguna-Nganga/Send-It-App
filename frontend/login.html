@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com;">
+    <title>SendIT - Login</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1 id="form-title">Welcome Back</h1>
+            <div id="message-box" class="hidden"></div>
+            
+            <br>
+
+            <form id="loginForm" class="auth-form">
+                <h2>Login to Your Account</h2>
+                <div class="form-group">
+                    <input type="email" id="loginEmail" placeholder="Email" class="input-field" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="loginPassword" placeholder="Password" class="input-field" required>
+                </div>
+                <div class="form-group">
+                    <div class="role-buttons">
+                        <div class="role-option">
+                            <input type="radio" id="userRole" name="role" value="0" required>
+                            <label for="userRole">User</label>
+                        </div>
+                        <div class="role-option">
+                            <input type="radio" id="adminRole" name="role" value="1">
+                            <label for="adminRole">Admin</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <p class="toggle-text">
+                    Don't have an account? <a href="register.html" class="toggle-link">Register here</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script  src="assets/js/auth.js"></script>
+</body>
+</html>

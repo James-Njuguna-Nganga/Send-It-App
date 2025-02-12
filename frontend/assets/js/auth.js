@@ -1,82 +1,112 @@
 document.addEventListener("DOMContentLoaded", function () {
     const formTitle = document.getElementById("form-title");
     const nameField = document.getElementById("name");
+    const roleField = document.getElementById("role");
     const submitButton = document.querySelector(".btn");
     const toggleText = document.getElementById("toggleForm");
     const form = document.getElementById("authForm");
     const messageBox = document.getElementById("message-box");
 
-    let isLogin = true; // Track login or register mode
+    let isLogin = true;
 
     function toggleForm() {
         isLogin = !isLogin;
-
-        if (isLogin) {
-            formTitle.textContent = "Login";
-            nameField.classList.add("hidden");
-            submitButton.textContent = "Login";
-            toggleText.innerHTML = `Don't have an account? <span>Register</span>`;
-        } else {
-            formTitle.textContent = "Register";
-            nameField.classList.remove("hidden");
-            submitButton.textContent = "Register";
-            toggleText.innerHTML = `Already have an account? <span>Login</span>`;
-        }
-
-        document.querySelector("#toggleForm span").addEventListener("click", toggleForm);
+        formTitle.textContent = isLogin ? "Login" : "Register";
+        nameField.classList.toggle("hidden", isLogin);
+        roleField.classList.toggle("hidden", isLogin);
+        submitButton.textContent = isLogin ? "Login" : "Register";
+        toggleText.innerHTML = isLogin ? "Register" : "Login";
     }
 
     toggleText.addEventListener("click", toggleForm);
 
-    form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
-        const fullName = isLogin ? null : document.getElementById("name").value;
-
-        if (!email || !password || (!isLogin && !fullName)) {
-            showMessage("Please fill in all required fields.", "error");
-            return;
-        }
 
         if (isLogin) {
-            loginUser(email, password);
+            handleLogin(email, password);
         } else {
-            registerUser(fullName, email, password);
+            const fullName = document.getElementById("name").value;
+            const role = document.getElementById("role").value;
+            handleRegistration(fullName, email, password, role);
         }
     });
 
-    function registerUser(fullName, email, password) {
-        const user = { fullName, email, password };
-        localStorage.setItem("registeredUser", JSON.stringify(user));
-        showMessage("Registration successful! Please log in.", "success");
-        toggleForm();
+    async function handleLogin(email, password) {
+        try {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (!user) {
+                showMessage("Invalid email or password", "error");
+                return;
+            }
+
+            sessionStorage.setItem('currentUser', JSON.stringify({
+                id: user.id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role
+            }));
+
+            showMessage("Login successful! Redirecting...", "success");
+            
+            setTimeout(() => {
+                if (user.role === "1") {
+                    window.location.href = "dashboard.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
+            }, 1500);
+
+        } catch (error) {
+            showMessage("Login failed: " + error.message, "error");
+        }
     }
 
-    function loginUser(email, password) {
-        const storedUser = JSON.parse(localStorage.getItem("registeredUser"));
+    async function handleRegistration(fullName, email, password, role) {
+        try {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            if (users.some(user => user.email === email)) {
+                showMessage("Email already registered", "error");
+                return;
+            }
 
-        if (!storedUser || storedUser.email !== email || storedUser.password !== password) {
-            showMessage("Invalid email or password.", "error");
-            return;
+            const newUser = {
+                id: Date.now(),
+                fullName,
+                email,
+                password,
+                role,
+                createdAt: new Date().toISOString()
+            };
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            showMessage("Registration successful! Please login.", "success");
+            setTimeout(() => {
+                toggleForm();
+                form.reset();
+            }, 1500);
+
+        } catch (error) {
+            showMessage("Registration failed: " + error.message, "error");
         }
-
-        localStorage.setItem("loggedInUser", JSON.stringify(storedUser));
-        showMessage("Login successful! Redirecting...", "success");
-
-        setTimeout(() => {
-            window.location.href = "dashboard.html";
-        }, 1500);
     }
 
     function showMessage(message, type) {
+        const messageBox = document.getElementById("message-box");
         messageBox.textContent = message;
         messageBox.className = `message ${type}`;
-        messageBox.style.display = "block";
-
+        messageBox.classList.remove('hidden');
+        
         setTimeout(() => {
-            messageBox.style.display = "none";
+            messageBox.classList.add('hidden');
         }, 3000);
     }
 });

@@ -3,46 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Send-It | Admin Panel</title>
+    <title>Admin Panel</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-
     <header>
         <h1>Admin Dashboard</h1>
         <button id="logout-btn">Logout</button>
     </header>
 
-    <div class="container">
-        <h2>Create Parcel Delivery Order</h2>
-        <form id="parcel-form">
-            <input type="text" id="sender" placeholder="Sender Name" required>
-            <input type="email" id="sender-email" placeholder="Sender Email" required>
-            <input type="text" id="receiver" placeholder="Receiver Name" required>
-            <input type="email" id="receiver-email" placeholder="Receiver Email" required>
-            <input type="text" id="pickup" placeholder="Pickup Location" required>
-            <input type="text" id="destination" placeholder="Destination" required>
-            <button type="submit">Create Parcel</button>
-        </form>
+    <main>
+        <section>
+            <h2>Create Parcel</h2>
+            <form id="parcel-form">
+                <input type="text" placeholder="Sender Name" required>
+                <input type="email" placeholder="Sender Email" required>
+                <input type="text" placeholder="Receiver Name" required>
+                <input type="email" placeholder="Receiver Email" required>
+                <input type="text" placeholder="Pickup Location" required>
+                <input type="text" placeholder="Destination" required>
+                <button type="submit">Create</button>
+            </form>
+        </section>
 
-        <h2>All Parcels</h2>
-        <input type="text" id="search-parcel" placeholder="Search Parcel..." class="search-box">
-        <table id="parcel-table">
-            <thead>
-                <tr>
-                    <th>Parcel ID</th>
-                    <th>Sender</th>
-                    <th>Receiver</th>
-                    <th>Pickup</th>
-                    <th>Destination</th>
-                    <th>Status</th>
-                    <th>Update</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <script src="assets/js/admin.js"></script>
+        <section>
+            <h2>All Parcels</h2>
+            <input type="text" placeholder="Search Parcel...">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Sender</th>
+                        <th>Receiver</th>
+                        <th>Pickup</th>
+                        <th>Destination</th>
+                        <th>Status</th>
+                        <th>Update</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </main>
+    
+    <script type="mode" src="assets/js/admin.js"></script>
 </body>
 </html>
