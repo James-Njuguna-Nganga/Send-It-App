@@ -1,60 +1,51 @@
 const sql = require('mssql');
-const dotenv = require('dotenv');
-const { log } = require('console');
-
-// Load environment variables using CommonJS
-
-const path = require('path');
-
-// Load the .env file from a specific path
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
+require('dotenv').config();
 
 const config = {
-    user: process.env.DB_USER || 'your_default_user',
-    password: process.env.DB_PASSWORD || 'your_default_password',
-    server: process.env.DB_SERVER || 'your_default_server',
-    database: process.env.DB_NAME || 'your_default_db',
+    user: process.env.DB_USER || 'sa',
+    password: process.env.DB_PASSWORD || '2024',
+    server: process.env.DB_SERVER || 'SAMWEL-GRAYHAT2',
+    database: process.env.DB_NAME || 'SenditApp',
     options: {
-        encrypt: true, // Use encryption
-        enableArithAbort: true,
-        trustServerCertificate: true// Fix SSL issues
+        encrypt: false, // Change this to false for local SQL Server
+        trustServerCertificate: true,
+        enableArithAbort: true
+    },
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
     }
 };
-async function testConnection() {
-    //test whether we can query the database
-    try {
-        // const pool = await poolPromise;
-        let pool = await sql.connect(config);
-        const result = await pool.request().query('SELECT * FROM Test');
-        console.log(result.recordset);
-        return result;
-    } catch (error) {
-        console.error('Error testing database connection', error);
-        return error;
-    }
-}
-console.log('should see')
-console.log(process.env.DB_PASSWORD)
-console.log(process.env.DB_NAME)
-testConnection();
 
-// Ensure required environment variables are loaded
-if (!config.server || typeof config.server !== 'string') {
-    throw new Error('Database connection failed: The "config.server" property is required and must be of type string.');
-}
+// Create connection pool
+const pool = new sql.ConnectionPool(config);
 
-const poolPromise = new sql.ConnectionPool(config)
-    .connect()
+// Connect and create a global promise
+const poolPromise = pool.connect()
     .then(pool => {
-        console.log('Connected to SQL Server');
+        console.log('Connected to SQL Server successfully');
         return pool;
     })
     .catch(err => {
-        console.error('Database Connection Failed!', err);
-        process.exit(1); // Stop the server if DB connection fails
+        console.error('Database Connection Failed:', err);
+        throw err;
     });
 
+const testConnection = async () => {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request().query('SELECT 1');
+        console.log('Database connection test successful');
+        return true;
+    } catch (error) {
+        console.error('Database connection test failed:', error);
+        return false;
+    }
+};
+
 module.exports = {
-    sql, poolPromise
+    sql,
+    poolPromise,
+    testConnection
 };

@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { createParcel, softDeleteParcel } = require('../controllers/parcelController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
+const parcelController = require('../controllers/parcelController');
+const { authenticateToken, isAdmin } = require('../middlewares/authMiddleware');
 
-router.post('/', authenticateToken, createParcel);
-router.delete('/:parcelId', authenticateToken, softDeleteParcel);
+// Protected routes
+router.post('/', authenticateToken, parcelController.createParcel);
+router.get('/all', authenticateToken, isAdmin, parcelController.getAllParcels);
+router.get('/user', authenticateToken, parcelController.getUserParcels);
+router.get('/:parcelId', authenticateToken, parcelController.getParcel);
+router.put('/:parcelId', authenticateToken, parcelController.updateParcel);
+router.put('/:parcelId/status', authenticateToken, isAdmin, parcelController.updateParcelStatus);
+router.delete('/:parcelId', authenticateToken, parcelController.softDeleteParcel);
 
 module.exports = router;
