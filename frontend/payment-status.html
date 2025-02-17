@@ -104,7 +104,6 @@
 </head>
 <body>
     <div class="payment-container">
-        <!-- Success Card -->
         <div id="successCard" class="payment-card success hidden">
             <i class="fas fa-check-circle icon success-icon"></i>
             <h1>Payment Successful!</h1>
@@ -123,8 +122,6 @@
                 </button>
             </div>
         </div>
-
-        <!-- Failure Card -->
         <div id="failureCard" class="payment-card error hidden">
             <i class="fas fa-times-circle icon error-icon"></i>
             <h1>Payment Failed</h1>
@@ -158,8 +155,6 @@
                 failureCard.classList.remove('hidden');
             }
         });
-
-        // Print only success content
         if (window.matchMedia) {
             const mediaQueryList = window.matchMedia('print');
             mediaQueryList.addListener(function(mql) {
