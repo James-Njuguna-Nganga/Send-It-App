@@ -1,6 +1,3 @@
-import { log } from 'console';
-import { register } from './services/authService.js';
-
 document.addEventListener('DOMContentLoaded', () => {
     const regAPI = 'http://localhost:5000/api/auth/register';
     const registerForm = document.getElementById('registerForm');
@@ -23,6 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
+    function validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -30,15 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('regEmail').value.trim();
         const password = document.getElementById('regPassword').value;
 
-        const newUser = {
-            name,
-            email,
-            password
-        }
-
         // Basic validation
         if (!name || !email || !password) {
             showMessage('All fields are required', 'error');
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            showMessage('Please enter a valid email address', 'error');
             return;
         }
 
@@ -49,31 +50,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await register(name, email, password);
-            const res = await fetch(regAPI, {
+            const response = await fetch(regAPI, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(newUser)
-            })
-            const data = await res.json()
-            if(!res.ok){
-                throw new Error(data.message || 'Registration failed')
+                body: JSON.stringify({
+                    name,
+                    email,
+                    password
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Registration failed');
             }
-            console.log(data)
+
+            showMessage('Registration successful! Redirecting to login...', 'success');
             
-            if (response.success) {
-                showMessage('Registration successful! Redirecting to login...', 'success');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
-            } else {
-                showMessage(response.message || 'Registration failed', 'error');
-            }
+            // Store success message in sessionStorage for login page
+            sessionStorage.setItem('registrationSuccess', 'true');
+            
+            // Redirect to login page after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+
         } catch (error) {
-            showMessage(error.message || 'An error occurred', 'error');
+            console.error('Registration error:', error);
+            showMessage(error.message || 'An error occurred during registration', 'error');
         }
     });
 });

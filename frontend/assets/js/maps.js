@@ -1,25 +1,46 @@
-function initMap() {
-    const map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 6,
-        center: { lat: -1.286389, lng: 36.817223 }
-    });
+class ParcelMap {
+    constructor(containerId) {
+        this.map = new google.maps.Map(document.getElementById(containerId), {
+            zoom: 12,
+            center: { lat: -1.2921, lng: 36.8219 } // Default to Nairobi
+        });
+        this.directionsService = new google.maps.DirectionsService();
+        this.directionsRenderer = new google.maps.DirectionsRenderer();
+        this.directionsRenderer.setMap(this.map);
+    }
 
-    fetch("http://localhost:5000/api/parcels")
-        .then(response => response.json())
-        .then(parcels => {
-            parcels.forEach(parcel => {
-                new google.maps.Marker({
-                    position: { lat: parcel.pickup_lat, lng: parcel.pickup_lng },
-                    map,
-                    title: "Pickup Location"
-                });
-
-                new google.maps.Marker({
-                    position: { lat: parcel.dest_lat, lng: parcel.dest_lng },
-                    map,
-                    title: "Destination"
-                });
+    async showRoute(pickup, destination) {
+        try {
+            const result = await this.directionsService.route({
+                origin: pickup,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING
             });
-        })
-        .catch(error => console.error("Error loading map data", error));
+            
+            this.directionsRenderer.setDirections(result);
+        } catch (error) {
+            console.error('Error displaying route:', error);
+        }
+    }
+
+    static async getCurrentLocation() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('Geolocation is not supported'));
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    resolve({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                },
+                error => {
+                    reject(error);
+                }
+            );
+        });
+    }
 }

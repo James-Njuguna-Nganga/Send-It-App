@@ -1,187 +1,352 @@
-<<<<<<< HEAD
 document.addEventListener("DOMContentLoaded", async () => {
-    const sentParcelsTable = document.querySelector("#sent-parcels tbody");
-    const receivedParcelsTable = document.querySelector("#received-parcels tbody");
-    const searchSent = document.getElementById("search-sent");
-    const searchReceived = document.getElementById("search-received");
-    const logoutBtn = document.getElementById("logout-btn");
-
+    // Check authentication
     const token = localStorage.getItem("token");
-    if (!token) {
-        window.location.href = "index.html";
-=======
-const parcelService= require('./services/parcelService');
-document.addEventListener("DOMContentLoaded", async () => {c
-    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
-    if (!currentUser) {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!token || !user) {
         window.location.href = "login.html";
         return;
->>>>>>> Samuel
     }
 
-    const isAdmin = currentUser.role === "1";
-    
     const elements = {
-        sentParcelsTable: document.querySelector("#sent-parcels tbody"),
-        receivedParcelsTable: document.querySelector("#received-parcels tbody"),
-        searchSent: document.getElementById("search-sent"),
-        searchReceived: document.getElementById("search-received"),
+        userName: document.getElementById("user-name"),
         logoutBtn: document.getElementById("logout-btn"),
-        newParcelForm: document.getElementById("new-parcel-form")
+        adminControls: document.getElementById("admin-controls"),
+        sentParcelsTable: document.querySelector("#sent-parcels tbody"),
+        newParcelForm: document.getElementById("new-parcel-form"),
+        totalParcels: document.getElementById("total-parcels"),
+        inTransit: document.getElementById("in-transit"),
+        delivered: document.getElementById("delivered"),
+        searchSent: document.getElementById("search-sent"),
+        modalContainer: document.getElementById("modal-container")
     };
 
-    // Handle new parcel creation
-    elements.newParcelForm.addEventListener('submit', (e) => {
+    // Initialize dashboard
+    await initializeDashboard();
+
+    // Event Listeners
+    elements.logoutBtn.addEventListener("click", handleLogout);
+    elements.searchSent?.addEventListener("input", handleSearch);
+    elements.newParcelForm?.addEventListener("submit", handleNewParcel);
+
+    async function initializeDashboard() {
+        try {
+            elements.userName.textContent = `Welcome, ${user.name}`;
+
+            if (user.isAdmin) {
+                elements.adminControls?.classList.remove("hidden");
+                await loadAllParcels();
+            } else {
+                await loadUserParcels();
+            }
+        } catch (error) {
+            console.error("Dashboard initialization error:", error);
+            showMessage("Error initializing dashboard", "error");
+        }
+    }
+
+    async function loadAllParcels() {
+        try {
+            const response = await fetch("http://localhost:5000/api/parcels/all", {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to fetch parcels');
+            }
+
+            const data = await response.json();
+            if (!data.data) throw new Error('No parcel data received');
+
+            updateDashboardStats(data.data);
+            displayParcels(data.data);
+        } catch (error) {
+            console.error("Load parcels error:", error);
+            showMessage("Error loading parcels: " + error.message, "error");
+        }
+    }
+
+    async function loadUserParcels() {
+        try {
+            const response = await fetch("http://localhost:5000/api/parcels/user", {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to fetch parcels');
+            }
+
+            const data = await response.json();
+            if (!data.data) throw new Error('No parcel data received');
+
+            displayParcels(data.data);
+        } catch (error) {
+            console.error("Load user parcels error:", error);
+            showMessage("Error loading parcels: " + error.message, "error");
+        }
+    }
+
+    async function handleNewParcel(e) {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const newParcel = {
-            id: Date.now(),
-            userId: currentUser.id,
-            receiverName: formData.get('receiver_name'),
-            pickup: formData.get('pickup'),
-            destination: formData.get('destination'),
-            description: formData.get('description'),
-            status: 'pending'
-        };
 
-        const parcels = JSON.parse(localStorage.getItem('parcels') || '[]');
-        parcels.push(newParcel);
-        localStorage.setItem('parcels', JSON.stringify(parcels));
-        showMessage('Parcel created successfully', 'success');
-        loadParcels();
-        e.target.reset();
-    });
+        try {
+            const formData = {
+                pickupLocation: e.target.pickup.value.trim(),
+                destination: e.target.destination.value.trim(),
+                receiverEmail: e.target.receiver_email.value.trim()
+            };
 
-    // Handle logout
-    elements.logoutBtn.addEventListener('click', () => {
-        sessionStorage.removeItem('currentUser');
-        window.location.href = 'login.html';
-    });
+            if (!formData.pickupLocation || !formData.destination || !formData.receiverEmail) {
+                throw new Error('Please fill in all fields');
+            }
 
-    // Handle search
-    elements.searchSent.addEventListener('input', (e) => {
-        filterParcels(e.target.value, 'sent');
-    });
+            const response = await fetch("http://localhost:5000/api/parcels", {
+                method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
 
-    elements.searchReceived.addEventListener('input', (e) => {
-        filterParcels(e.target.value, 'received');
-    });
+            const data = await response.json();
 
-    function loadParcels() {
-        const parcels = JSON.parse(localStorage.getItem('parcels') || '[]');
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to create parcel');
+            }
+
+            showMessage("Parcel created successfully!", "success");
+            e.target.reset();
+            
+            if (user.isAdmin) {
+                await loadAllParcels();
+            } else {
+                await loadUserParcels();
+            }
+        } catch (error) {
+            console.error("Create parcel error:", error);
+            showMessage(error.message, "error");
+        }
+    }
+    window.viewParcel = async (id) => {
+        try {
+            showMessage("Loading parcel details...", "info");
+            
+            if (!id) {
+                throw new Error('Invalid parcel ID');
+            }
+    
+            const response = await fetch(`http://localhost:5000/api/parcels/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+    
+            const data = await response.json();
+            console.log();
+            
+    
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch parcel details');
+            }
+    
+            if (!data.data) {
+                throw new Error('Parcel not found');
+            }
+    
+            closeModal();
+            showParcelModal(data.data);
+    
+        } catch (error) {
+            console.error("View parcel error:", error);
+            showMessage("Error viewing parcel: " + error.message, "error");
+        }
+    };
+
+// Update the showParcelModal function
+function showParcelModal(parcel) {
+    // Validate parcel data
+    if (!parcel || !parcel.ParcelID) {
+        showMessage("Invalid parcel data", "error");
+        return;
+    }
+
+    const modalHTML = `
+        <div class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Parcel Details</h2>
+                <div class="parcel-details">
+                    <p><strong>Parcel ID:</strong> ${parcel.ParcelID || 'N/A'}</p>
+                    <p><strong>Sender:</strong> ${parcel.SenderName || 'N/A'}</p>
+                    <p><strong>Pickup Location:</strong> ${parcel.PickupLocation || 'N/A'}</p>
+                    <p><strong>Destination:</strong> ${parcel.Destination || 'N/A'}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="status-badge status-${(parcel.Status || 'pending').toLowerCase().replace(' ', '-')}">
+                            ${parcel.Status || 'Pending'}
+                        </span>
+                    </p>
+                    <p><strong>Receiver Email:</strong> ${parcel.ReceiverEmail || 'N/A'}</p>
+                    <p><strong>Created:</strong> ${parcel.CreatedAt ? new Date(parcel.CreatedAt).toLocaleString() : 'N/A'}</p>
+                    ${parcel.UpdatedAt ? `
+                        <p><strong>Last Updated:</strong> ${new Date(parcel.UpdatedAt).toLocaleString()}</p>
+                    ` : ''}
+                </div>
+                ${user.isAdmin ? `
+                    <div class="status-update">
+                        <h3>Update Status</h3>
+                        <select id="statusSelect" class="form-control">
+                            <option value="Pending" ${parcel.Status === 'Pending' ? 'selected' : ''}>Pending</option>
+                            <option value="In Transit" ${parcel.Status === 'In Transit' ? 'selected' : ''}>In Transit</option>
+                            <option value="Delivered" ${parcel.Status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        </select>
+                        <button onclick="updateParcelStatus(${parcel.ParcelID})" class="btn-primary">
+                            <i class="fas fa-save"></i> Update Status
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+
+    // Add modal to DOM
+    elements.modalContainer.innerHTML = modalHTML;
+
+    // Get modal elements
+    const modal = document.querySelector('.modal');
+    const closeBtn = document.querySelector('.close');
+
+    // Add event listeners
+    closeBtn.onclick = closeModal;
+    window.onclick = (e) => {
+        if (e.target === modal) closeModal();
+    };
+    // Add this function to handle payment success
+function showPaymentSuccess(parcelId) {
+    const template = document.getElementById('payment-success-template');
+    const modalContainer = document.getElementById('modal-container');
+    
+    modalContainer.innerHTML = template.innerHTML;
+    modalContainer.classList.add('active');
+    
+    const parcelIdSpan = modalContainer.querySelector('#parcelId');
+    if (parcelIdSpan) {
+        parcelIdSpan.textContent = parcelId;
+    }
+}
+
+// Add this to your existing code
+function closeModal() {
+    const modalContainer = document.getElementById('modal-container');
+    modalContainer.classList.remove('active');
+    modalContainer.innerHTML = '';
+}
+
+// Update your payment handling
+window.initiatePayment = async (parcelId) => {
+    try {
+        // ... existing payment code ...
         
-        // Clear existing tables
+        if (response.ok) {
+            showPaymentSuccess(parcelId);
+            await loadParcels(); // Refresh parcel list
+        }
+        
+        // ... rest of the code ...
+    } catch (error) {
+        console.error("Payment error:", error);
+        showMessage("Payment error: " + error.message, "error");
+    }
+};
+}
+
+    function updateDashboardStats(parcels) {
+        if (!user.isAdmin) return;
+
+        const stats = parcels.reduce((acc, parcel) => {
+            acc.total++;
+            if (parcel.Status === 'In Transit') acc.inTransit++;
+            if (parcel.Status === 'Delivered') acc.delivered++;
+            return acc;
+        }, { total: 0, inTransit: 0, delivered: 0 });
+
+        elements.totalParcels.textContent = stats.total;
+        elements.inTransit.textContent = stats.inTransit;
+        elements.delivered.textContent = stats.delivered;
+    }
+
+    function displayParcels(parcels) {
+        if (!elements.sentParcelsTable) return;
+
         elements.sentParcelsTable.innerHTML = '';
-        elements.receivedParcelsTable.innerHTML = '';
+
+        if (!parcels.length) {
+            elements.sentParcelsTable.innerHTML = `
+                <tr><td colspan="5" class="no-data">No parcels found</td></tr>
+            `;
+            return;
+        }
 
         parcels.forEach(parcel => {
             const row = createParcelRow(parcel);
-            if (parcel.userId === currentUser.id) {
-                elements.sentParcelsTable.appendChild(row);
-            } else if (parcel.receiverName === currentUser.fullName) {
-                elements.receivedParcelsTable.appendChild(row);
-            }
+            elements.sentParcelsTable.appendChild(row);
         });
     }
 
     function createParcelRow(parcel) {
-        const row = document.createElement('tr');
-        row.dataset.id = parcel.id;
+        const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${parcel.id}</td>
-            <td>${parcel.receiverName}</td>
-            <td>${parcel.pickup}</td>
-            <td>${parcel.status}</td>
+            <td>${parcel.ParcelID}</td>
+            <td>${parcel.PickupLocation}</td>
+            <td>${parcel.Destination}</td>
+            <td><span class="status-badge status-${parcel.Status.toLowerCase().replace(' ', '-')}">${parcel.Status}</span></td>
             <td>
-                <button onclick="viewParcelDetails(${parcel.id})" class="btn-view">View</button>
-                ${isAdmin ? `
-                    <button onclick="editParcel(${parcel.id})" class="btn-edit">Edit</button>
-                    <button onclick="deleteParcel(${parcel.id})" class="btn-delete">Delete</button>
+                <button onclick="viewParcel(${parcel.ParcelID})" class="btn-primary">
+                    <i class="fas fa-eye"></i> View
+                </button>
+                ${user.isAdmin ? `
+                    <button onclick="updateParcelStatus(${parcel.ParcelID})" class="btn-primary">
+                        <i class="fas fa-edit"></i> Update
+                    </button>
+                ` : ''}
+                ${parcel.Status === 'Pending' ? `
+                    <button onclick="cancelParcel(${parcel.ParcelID})" class="btn-danger">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
                 ` : ''}
             </td>
         `;
         return row;
     }
 
-    function filterParcels(searchTerm, type) {
-        const table = type === 'sent' ? elements.sentParcelsTable : elements.receivedParcelsTable;
-        const rows = table.getElementsByTagName('tr');
+    function showMessage(message, type = "info") {
+        const messageBox = document.createElement("div");
+        messageBox.className = `message ${type}`;
+        messageBox.textContent = message;
+        document.body.appendChild(messageBox);
+        setTimeout(() => messageBox.remove(), 3000);
+    }
+
+    function handleSearch(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = elements.sentParcelsTable.getElementsByTagName("tr");
         
         Array.from(rows).forEach(row => {
             const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchTerm.toLowerCase()) ? '' : 'none';
+            row.style.display = text.includes(searchTerm) ? "" : "none";
         });
     }
 
-    window.editParcel = function(id) {
-        if (!isAdmin) {
-            showMessage('Only admins can edit parcels', 'error');
-            return;
-        }
-
-        const parcels = JSON.parse(localStorage.getItem('parcels'));
-        const parcel = parcels.find(p => p.id === id);
-        
-        if (parcel) {
-            const newStatus = prompt('Enter new status:', parcel.status);
-            if (newStatus) {
-                parcel.status = newStatus;
-                localStorage.setItem('parcels', JSON.stringify(parcels));
-                loadParcels();
-                showMessage('Parcel updated successfully', 'success');
-            }
-        }
-    };
-
-    window.deleteParcel = function(id) {
-        if (!isAdmin) {
-            showMessage('Only admins can delete parcels', 'error');
-            return;
-        }
-
-        if (confirm('Are you sure you want to delete this parcel?')) {
-            const parcels = JSON.parse(localStorage.getItem('parcels'));
-            const updatedParcels = parcels.filter(p => p.id !== id);
-            localStorage.setItem('parcels', JSON.stringify(updatedParcels));
-            loadParcels();
-            showMessage('Parcel deleted successfully', 'success');
-        }
-    };
-
-    window.viewParcelDetails = function(id) {
-        const parcels = JSON.parse(localStorage.getItem('parcels'));
-        const parcel = parcels.find(p => p.id === id);
-        
-        if (parcel) {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Parcel Details</h3>
-                    <p><strong>ID:</strong> ${parcel.id}</p>
-                    <p><strong>Receiver:</strong> ${parcel.receiverName}</p>
-                    <p><strong>Pickup:</strong> ${parcel.pickup}</p>
-                    <p><strong>Destination:</strong> ${parcel.destination}</p>
-                    <p><strong>Status:</strong> ${parcel.status}</p>
-                    <p><strong>Description:</strong> ${parcel.description}</p>
-                    <button onclick="this.parentElement.parentElement.remove()">Close</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-    };
-
-    function showMessage(message, type = 'info') {
-        const messageBox = document.createElement('div');
-        messageBox.textContent = message;
-        messageBox.className = `message ${type}`;
-        document.body.appendChild(messageBox);
-        
-        setTimeout(() => {
-            messageBox.remove();
-        }, 3000);
+    function handleLogout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "login.html";
     }
-
-    // Load parcels on page load
-    loadParcels();
 });
+

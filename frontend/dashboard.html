@@ -3,78 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:5500;">
     <title>SendIT - Dashboard</title>
-    <link rel="stylesheet" href="assets/css/dashboard.css">
-
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="dashboard-container">
         <header>
-            <h1>PARCEL DASHBOARD</h1>
-            <button id="logout-btn">Logout</button>
+            <h1><i class="fas fa-shipping-fast"></i> SendIT Dashboard</h1>
+            <div class="user-info">
+                <!-- <span id="user-name"></span> -->
+                <button id="logout-btn" class="btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
         </header>
 
-        <!-- <div id="message-box" class="hidden"></div>
-        <div id="loading" class="hidden">Loading...</div>
-        <div id="error-message" class="hidden"></div> -->
-
-        <!-- New Parcel Form -->
-        <section class="new-parcel-section">
-            <h2>Create New Parcel</h2>
-            <form id="new-parcel-form">
-                <input type="text" name="id" placeholder="UserID" required>
-                <input type="text" name="receiver_name" placeholder="Receiver Name" required>
-                <input type="text" name="pickup" placeholder="Pickup Location" required>
-                <input type="text" name="destination" placeholder="Price" required>
-                <!-- <input type="number" name="weight" placeholder="Weight (kg)" required> -->
-                <textarea name="description" placeholder="Description"></textarea>
-                <button type="submit">Create Parcel</button>
-            </form>
-        </section>
-
-        <!-- Sent Parcels -->
-        <section class="parcels-section">
-            <h2>Sent Parcels</h2>
-            <input type="text" id="search-sent" placeholder="Search sent parcels...">
-            <div class="table-container">
-                <table id="sent-parcels">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Receiver Name</th>
-                            <th>Pickup Location</th>
-                            <!-- <th>Destination</th> -->
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+        <div class="dashboard-content">
+            <!-- Admin Controls -->
+            <div id="admin-controls" class="section hidden">
+                <h2><i class="fas fa-user-shield"></i> Admin Controls</h2>
+                <div class="admin-stats">
+                    <div class="stat-card">
+                        <h3>Total Parcels</h3>
+                        <p id="total-parcels">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>In Transit</h3>
+                        <p id="in-transit">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Delivered</h3>
+                        <p id="delivered">0</p>
+                    </div>
+                </div>
             </div>
-        </section>
 
-        <!-- Received Parcels -->
-        <section class="parcels-section">
-            <h2>Received Parcels</h2>
-            <input type="text" id="search-received" placeholder="Search received parcels...">
-            <div class="table-container">
-                <table id="received-parcels">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Sender Name</th>
-                            <th>Pickup Location</th>
-                            <!-- <th>Destination</th> -->
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <!-- Create Parcel Section -->
+            <div class="section" id="create-parcel-section">
+                <h2><i class="fas fa-plus-circle"></i> Create New Parcel</h2>
+                <form id="new-parcel-form" class="form-grid">
+                    <div class="form-group">
+                        <label for="pickup">Pickup Location</label>
+                        <input type="text" id="pickup" name="pickup" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="destination">Destination</label>
+                        <input type="text" id="destination" name="destination" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="receiver_email">Receiver Email</label>
+                        <input type="email" id="receiver_email" name="receiver_email" required>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Create Parcel
+                    </button>
+                </form>
             </div>
-        </section>
-    </div>
-    <script type="module" src="assets/js/dashboard.js"></script>
+
+            <!-- Parcels List Section -->
+            <div class="section">
+                <h2><i class="fas fa-boxes"></i> My Parcels</h2>
+                <div class="search-box">
+                    <input type="text" id="search-sent" placeholder="Search parcels...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <div class="table-responsive">
+                    <table id="sent-parcels">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Pickup Location</th>
+                                <th>Destination</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        
+        <div id="modal-container"></div>
+    <script src="assets/js/dashboard.js"></script>
 </body>
 </html>
