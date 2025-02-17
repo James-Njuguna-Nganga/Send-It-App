@@ -1,49 +1,59 @@
-import AuthService from './services/authService.js';
-
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const messageBox = document.getElementById('message-box');
 
-    function showMessage(message, type = 'info') {
-        messageBox.textContent = message;
-        messageBox.className = `message ${type}`;
-        messageBox.classList.remove('hidden');
-        
-        setTimeout(() => {
-            messageBox.classList.add('hidden');
-        }, 3000);
-    }
-
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
 
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        const role = document.querySelector('input[name="role"]:checked')?.value;
+        const role = document.querySelector('input[name="role"]:checked').value;
 
-        if (!role) {
-            showMessage('Please select a role', 'error');
+        if (!email || !password || !role) {
+            showMessage('Please fill in all fields.', 'error');
             return;
         }
 
         try {
-            if (email && password) {
-                const userData = {
-                    email,
-                    role,
-                    token: 'demo-token'
-                };
-                localStorage.setItem('currentUser', JSON.stringify(userData));
-                
-                showMessage('Login successful! Redirecting...', 'success');
-                setTimeout(() => {
+            const response = await fetch('http://localhost:5000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    role: role
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showMessage(data.message, 'success');
+
+                // Redirect based on role
+                if (data.role === '1') {
                     window.location.href = 'dashboard.html';
-                }, 5000);
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
             } else {
-                showMessage('Invalid credentials', 'error');
+                showMessage(data.message, 'error');
             }
+
         } catch (error) {
-            showMessage(error.message || 'Login failed', 'error');
+            showMessage('An error occurred: ' + error.message, 'error');
         }
     });
+
+    function showMessage(message, type) {
+        messageBox.textContent = message;
+        messageBox.className = `message ${type}`;
+        messageBox.classList.remove('hidden');
+
+        setTimeout(() => {
+            messageBox.classList.add('hidden');
+        }, 3000);
+    }
 });

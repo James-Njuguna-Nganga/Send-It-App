@@ -1,12 +1,22 @@
-import AuthService from './services/authService.js';
-import EmailService from './services/emailService.js';
-import { handleError } from './services/errorHandler.js';
-
+<<<<<<< HEAD
 document.addEventListener("DOMContentLoaded", async () => {
-    const currentUser = AuthService.getCurrentUser();
+    const sentParcelsTable = document.querySelector("#sent-parcels tbody");
+    const receivedParcelsTable = document.querySelector("#received-parcels tbody");
+    const searchSent = document.getElementById("search-sent");
+    const searchReceived = document.getElementById("search-received");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "index.html";
+=======
+const parcelService= require('./services/parcelService');
+document.addEventListener("DOMContentLoaded", async () => {c
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
     if (!currentUser) {
-        window.location.href = "register.html";
+        window.location.href = "login.html";
         return;
+>>>>>>> Samuel
     }
 
     const isAdmin = currentUser.role === "1";
@@ -17,129 +27,135 @@ document.addEventListener("DOMContentLoaded", async () => {
         searchSent: document.getElementById("search-sent"),
         searchReceived: document.getElementById("search-received"),
         logoutBtn: document.getElementById("logout-btn"),
-        newParcelForm: document.getElementById("new-parcel-form"),
-        loadingElement: document.getElementById("loading"),
-        errorElement: document.getElementById("error-message"),
-        adminControls: document.querySelectorAll(".admin-only")
+        newParcelForm: document.getElementById("new-parcel-form")
     };
-elements.adminControls.forEach(control => {
-    control.style.display = isAdmin ? 'block' : 'none';
-});
 
-if (!isAdmin) {
-    const crudElements = document.querySelectorAll('.btn-edit, .btn-delete, #new-parcel-form');
-    crudElements.forEach(element => {
-        element.style.display = 'none';
+    // Handle new parcel creation
+    elements.newParcelForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const newParcel = {
+            id: Date.now(),
+            userId: currentUser.id,
+            receiverName: formData.get('receiver_name'),
+            pickup: formData.get('pickup'),
+            destination: formData.get('destination'),
+            description: formData.get('description'),
+            status: 'pending'
+        };
+
+        const parcels = JSON.parse(localStorage.getItem('parcels') || '[]');
+        parcels.push(newParcel);
+        localStorage.setItem('parcels', JSON.stringify(parcels));
+        showMessage('Parcel created successfully', 'success');
+        loadParcels();
+        e.target.reset();
     });
-}
 
-    function showMessage(message, type = 'info') {
-        const messageBox = document.getElementById('message-box');
-        messageBox.textContent = message;
-        messageBox.className = `message ${type}`;
-        messageBox.classList.remove('hidden');
+    // Handle logout
+    elements.logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('currentUser');
+        window.location.href = 'login.html';
+    });
+
+    // Handle search
+    elements.searchSent.addEventListener('input', (e) => {
+        filterParcels(e.target.value, 'sent');
+    });
+
+    elements.searchReceived.addEventListener('input', (e) => {
+        filterParcels(e.target.value, 'received');
+    });
+
+    function loadParcels() {
+        const parcels = JSON.parse(localStorage.getItem('parcels') || '[]');
         
-        setTimeout(() => {
-            messageBox.classList.add('hidden');
-        }, 3000);
+        // Clear existing tables
+        elements.sentParcelsTable.innerHTML = '';
+        elements.receivedParcelsTable.innerHTML = '';
+
+        parcels.forEach(parcel => {
+            const row = createParcelRow(parcel);
+            if (parcel.userId === currentUser.id) {
+                elements.sentParcelsTable.appendChild(row);
+            } else if (parcel.receiverName === currentUser.fullName) {
+                elements.receivedParcelsTable.appendChild(row);
+            }
+        });
     }
-    
-    function showMessage(message, type = 'info') {
-        const messageBox = document.getElementById('message-box');
-        messageBox.textContent = message;
-        messageBox.className = `message ${type}`;
-        messageBox.classList.remove('hidden');
+
+    function createParcelRow(parcel) {
+        const row = document.createElement('tr');
+        row.dataset.id = parcel.id;
+        row.innerHTML = `
+            <td>${parcel.id}</td>
+            <td>${parcel.receiverName}</td>
+            <td>${parcel.pickup}</td>
+            <td>${parcel.status}</td>
+            <td>
+                <button onclick="viewParcelDetails(${parcel.id})" class="btn-view">View</button>
+                ${isAdmin ? `
+                    <button onclick="editParcel(${parcel.id})" class="btn-edit">Edit</button>
+                    <button onclick="deleteParcel(${parcel.id})" class="btn-delete">Delete</button>
+                ` : ''}
+            </td>
+        `;
+        return row;
+    }
+
+    function filterParcels(searchTerm, type) {
+        const table = type === 'sent' ? elements.sentParcelsTable : elements.receivedParcelsTable;
+        const rows = table.getElementsByTagName('tr');
         
-        setTimeout(() => {
-            messageBox.classList.add('hidden');
-        }, 3000);
+        Array.from(rows).forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm.toLowerCase()) ? '' : 'none';
+        });
     }
-    
-    
-    function editParcel(id) {
+
+    window.editParcel = function(id) {
         if (!isAdmin) {
             showMessage('Only admins can edit parcels', 'error');
             return;
         }
-    
-        const row = document.querySelector(`tr[data-id="${id}"]`);
-        const cells = row.getElementsByTagName("td");
+
+        const parcels = JSON.parse(localStorage.getItem('parcels'));
+        const parcel = parcels.find(p => p.id === id);
         
-        [1, 2, 3].forEach(index => {
-            cells[index].contentEditable = true;
-            cells[index].classList.add('editable');
-        });
-    
-        const saveButton = document.createElement('button');
-        saveButton.innerText = 'Save';
-        saveButton.className = 'btn-save';
-        
-        saveButton.onclick = function() {
-            const updatedData = {
-                receiverName: cells[1].innerText,
-                pickup: cells[2].innerText,
-                destination: cells[3].innerText
-            };
-    
-            fetch(`/api/parcels/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${AuthService.getToken()}`
-                },
-                body: JSON.stringify(updatedData)
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Update failed');
+        if (parcel) {
+            const newStatus = prompt('Enter new status:', parcel.status);
+            if (newStatus) {
+                parcel.status = newStatus;
+                localStorage.setItem('parcels', JSON.stringify(parcels));
+                loadParcels();
                 showMessage('Parcel updated successfully', 'success');
-                fetchParcels();
-            })
-            .catch(error => {
-                showMessage(error.message, 'error');
-            });
-        };
-    
-        row.appendChild(saveButton);
-    }
-    
-    function deleteParcel(id) {
+            }
+        }
+    };
+
+    window.deleteParcel = function(id) {
         if (!isAdmin) {
             showMessage('Only admins can delete parcels', 'error');
             return;
         }
-    
-        const confirmDelete = confirm('Are you sure you want to delete this parcel?');
-        if (!confirmDelete) return;
-    
-        fetch(`/api/parcels/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${AuthService.getToken()}`
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Delete failed');
+
+        if (confirm('Are you sure you want to delete this parcel?')) {
+            const parcels = JSON.parse(localStorage.getItem('parcels'));
+            const updatedParcels = parcels.filter(p => p.id !== id);
+            localStorage.setItem('parcels', JSON.stringify(updatedParcels));
+            loadParcels();
             showMessage('Parcel deleted successfully', 'success');
-            fetchParcels();
-        })
-        .catch(error => {
-            showMessage(error.message, 'error');
-        });
-    }
-    function viewParcelDetails(id) {
-        fetch(`/api/parcels/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${AuthService.getToken()}`
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to load parcel details');
-            return response.json();
-        })
-        .then(parcel => {
-            const detailsModal = document.createElement('div');
-            detailsModal.className = 'modal';
-            detailsModal.innerHTML = `
+        }
+    };
+
+    window.viewParcelDetails = function(id) {
+        const parcels = JSON.parse(localStorage.getItem('parcels'));
+        const parcel = parcels.find(p => p.id === id);
+        
+        if (parcel) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
                 <div class="modal-content">
                     <h3>Parcel Details</h3>
                     <p><strong>ID:</strong> ${parcel.id}</p>
@@ -147,15 +163,25 @@ if (!isAdmin) {
                     <p><strong>Pickup:</strong> ${parcel.pickup}</p>
                     <p><strong>Destination:</strong> ${parcel.destination}</p>
                     <p><strong>Status:</strong> ${parcel.status}</p>
+                    <p><strong>Description:</strong> ${parcel.description}</p>
                     <button onclick="this.parentElement.parentElement.remove()">Close</button>
                 </div>
             `;
-            document.body.appendChild(detailsModal);
-        })
-        .catch(error => {
-            showMessage(error.message, 'error');
-        });
+            document.body.appendChild(modal);
+        }
+    };
+
+    function showMessage(message, type = 'info') {
+        const messageBox = document.createElement('div');
+        messageBox.textContent = message;
+        messageBox.className = `message ${type}`;
+        document.body.appendChild(messageBox);
+        
+        setTimeout(() => {
+            messageBox.remove();
+        }, 3000);
     }
-    
-    await fetchParcels();
+
+    // Load parcels on page load
+    loadParcels();
 });

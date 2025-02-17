@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com;">
+    <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    connect-src 'self' http://localhost:5000 http://127.0.0.1:5500;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data: https:">
     <title>SendIT - Login</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
@@ -42,7 +47,7 @@
             </form>
         </div>
     </div>
-
-    <script  src="assets/js/auth.js"></script>
+    <!-- <script src="assets/js/login.js"></script> -->
+    <script type="module" src="assets/js/auth.js"></script>
 </body>
 </html>
