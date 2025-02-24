@@ -1,92 +1,77 @@
 const stripe = require('stripe')('sk_test_51QsLSZP6n3bd1t1sB6QQimTkgoUGnRJuL1hfB3LqmkNLRXt1pTeKedsKoTUSSSjAlM05kyXbcm5UFCsRJKnYD6pj00gZvMhh0b');
-const express = require('express');
-const router = express.Router();
-const path = require('path');
+const dotenv = require('dotenv');
 
-// Set up static file serving
-router.use('/static', express.static(path.join(__dirname, '..', 'frontend')));
+dotenv.config();
 
-// Create payment session
-async function createPaymentSession(parcelId, amount) {
-    try {
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: `Parcel Delivery #${parcelId}`,
-                        description: 'Payment for parcel delivery service',
-                    },
-                    unit_amount: amount * 100, // Convert to cents
-                },
-                quantity: 1,
-            }],
-            mode: 'payment',
-            success_url: `http://localhost:5000/payment/success?session_id={CHECKOUT_SESSION_ID}&parcel=${parcelId}`,
-            cancel_url: `http://localhost:5000/payment/cancel?parcel=${parcelId}`,
-            metadata: {
-                parcelId: parcelId.toString()
-            }
-        });
-
-        return session;
-    } catch (error) {
-        console.error('Payment session creation error:', error);
-        throw error;
-    }
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is not defined in environment variables.');
 }
 
-// Create payment endpoint
-router.post('/create-checkout-session', async (req, res) => {
+/**
+ * Create a Stripe checkout session
+ * @param {number} amount - 
+ * @param {string} [currency='usd']
+ * @param {string} [domain='http://localhost:5000'] 
+ * @param {Object} [metadata] 
+ * @returns {Promise<Object>} 
+ */
+const createCheckoutSession = async (
+    amount,
+    currency = 'usd',
+    domain = 'http://localhost:5000',
+    metadata = {}
+) => {
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+            {
+                price_data: {
+                    currency,
+                    product_data: {
+                        name: 'Parcel Delivery Fee',
+                    },
+                    unit_amount: amount,
+                },
+                quantity: 1,
+            },
+        ],
+        mode: 'payment',
+        // success_url: `${domain}/success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `http://127.0.0.1:52230/frontend/success.html?session_id={CHECKOUT_SESSION_ID}&parcel=${1}`,
+        cancel_url: `${domain}/cancel`,
+        metadata,
+    });
+    return session;
+};
+
+/**
+ * Retrieve a checkout session by ID
+ * @param {string} sessionId - Stripe session ID
+ * @returns {Promise<Object>} Stripe checkout session
+ */
+const getCheckoutSession = async (sessionId) => {
     try {
-        const { parcelId, amount } = req.body;
-
-        if (!parcelId || !amount) {
-            return res.status(400).json({
-                success: false,
-                message: 'Parcel ID and amount are required'
-            });
-        }
-
-        const session = await createPaymentSession(parcelId, amount);
-
-        res.json({
-            success: true,
-            sessionId: session.id,
-            url: session.url
-        });
-
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        return session;
     } catch (error) {
-        console.error('Create checkout session error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating checkout session'
-        });
+        throw new Error(`Failed to retrieve checkout session: ${error.message}`);
     }
-});
+};
 
-// Success endpoint
-router.get('/success', async (req, res) => {
-    const { session_id, parcel } = req.query;
+const LOCATIONS = [
+    'Nairobi',
+    'Nyeri',
+    'Kisumu',
+    'Kiambu',
+    'Narok',
+    'Nanyuki',
+    'Meru',
+];
 
-    try {
-        const session = await stripe.checkout.sessions.retrieve(session_id);
-        
-        if (session.payment_status === 'paid') {
-            res.redirect(`/static/payment-status.html?status=paid&parcel=${parcel}&session_id=${session_id}`);
-        } else {
-            res.redirect('/static/payment-status.html?status=failed');
-        }
-    } catch (error) {
-        console.error('Payment verification error:', error);
-        res.redirect('/static/payment-status.html?status=failed');
-    }
-});
-
-// Cancel endpoint
-router.get('/cancel', (req, res) => {
-    res.redirect('/static/payment-status.html?status=cancelled');
-});
-
-module.exports = router;
+module.exports = {
+    stripe,
+    createCheckoutSession,
+    getCheckoutSession,
+    LOCATIONS
+};

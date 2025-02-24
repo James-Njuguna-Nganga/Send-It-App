@@ -11,7 +11,7 @@ const sendParcelStatusSMS = async (phoneNumber, parcelId, status) => {
         const result = await sms.send({
             to: phoneNumber,
             message: message,
-            from: credentials.shortCode
+            // from: credentials.shortCode
         });
 
         console.log('SMS sent successfully:', result);

@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 // Environment validation with detailed logging
-const requiredEnvVars = ['JWT_SECRET', 'DB_USER', 'DB_PASSWORD', 'DB_SERVER', 'DB_NAME'];
+const requiredEnvVars = ['JWT_SECRET', 'DB_USER', 'DB_PASSWORD', 'DB_SERVER', 'DB_NAME','STRIPE_SECRET_KEY'];
 const missingEnvVars = requiredEnvVars.filter(varName => {
     const exists = !!process.env[varName];
     if (!exists) {
@@ -77,7 +77,9 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/parcels', parcelRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/payment', paymentRoutes);
+app.use('/frontend', express.static(path.join(__dirname, '..', 'frontend')));
+
 
 // Basic route for API health check
 app.get('/api/health', (req, res) => {

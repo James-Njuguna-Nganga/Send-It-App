@@ -1,5 +1,5 @@
 const { sql, poolPromise } = require('../config/db');
-const { sendParcelStatusSMS } = require('../../services/sms/sendSms');
+const { sendParcelStatusSMS } = require('../services/sms/sendSms');
 
 // Create Parcel
 const createParcel = async (req, res) => {

@@ -797,62 +797,39 @@ th {
     background: #d4edda;
     color: #155724;
 }
-.success-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+.payment-container {
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    background: #f8f9fa;
+    padding: 2rem;
 }
 
-.success-card {
+.payment-card {
     background: white;
-    padding: 2rem;
+    padding: 2.5rem;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     text-align: center;
-    max-width: 400px;
+    max-width: 450px;
     width: 90%;
+}
+
+.payment-card.success {
+    border-top: 5px solid #28a745;
 }
 
 .success-icon {
     font-size: 4rem;
     color: #28a745;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.success-details {
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 4px;
-}
-
-.success-details p {
-    margin: 0.5rem 0;
-    color: #666;
-}
-
-#modal-container {
-    display: none;
-}
-
-#modal-container.active {
-    display: block;
-}
-
-.hidden {
-    display: none !important;
-}
-
-#message-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1001;
+.status-badge {
+    background: #d4edda;
+    color: #155724;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
 }
